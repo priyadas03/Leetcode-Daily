@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class Solution {
+public:
+    vector<int> parent;
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void unite(int a, int b) {
+        int pa = find(a), pb = find(b);
+        if (pa != pb)
+            parent[pb] = pa;
+    }
+
+    string findTheString(vector<vector<int>>& lcp) {
+        int n = lcp.size();
+
+        // ✅ Step 1: Validate diagonal
+        for (int i = 0; i < n; i++) {
+            if (lcp[i][i] != n - i)
+                return "";
+        }
+
+        // ✅ Step 2: Initialize DSU
+        parent.resize(n);
+        for (int i = 0; i < n; i++)
+            parent[i] = i;
+
+        // ✅ Step 3: Union indices with lcp > 0
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (lcp[i][j] > 0) {
+                    unite(i, j);
+                }
+            }
+        }
+
+        // ✅ Step 4: Assign smallest characters
+        unordered_map<int, char> mp;
+        string word(n, ' ');
+        char curr = 'a';
+
+        for (int i = 0; i < n; i++) {
+            int root = find(i);
+            if (mp.find(root) == mp.end()) {
+                if (curr > 'z') return ""; // only 26 chars allowed
+                mp[root] = curr++;
+            }
+            word[i] = mp[root];
+        }
+
+        // ✅ Step 5: Validate using DP
+        vector<vector<int>> dp(n, vector<int>(n, 0));
+
+        for (int i = n - 1; i >= 0; i--) {
+            for (int j = n - 1; j >= 0; j--) {
+                if (word[i] == word[j]) {
+                    if (i + 1 < n && j + 1 < n)
+                        dp[i][j] = dp[i + 1][j + 1] + 1;
+                    else
+                        dp[i][j] = 1;
+                } else {
+                    dp[i][j] = 0;
+                }
+
+                if (dp[i][j] != lcp[i][j])
+                    return "";
+            }
+        }
+
+        return word;
+    }
+};
